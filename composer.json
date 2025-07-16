@@ -1,0 +1,19 @@
+{
+    "name": "exam-duty/portal",
+    "description": "Exam duty registration and scheduling portal",
+    "type": "project",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "ExamDuty\\Portal\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Roshan",
+            "email": "roshanb000b@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {}
+}
