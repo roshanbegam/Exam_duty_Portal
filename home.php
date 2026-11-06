@@ -724,10 +724,6 @@
   <div class="content animate_animated animate_fadeInRight">
     <h3>Streamline Your <span class="highlight">Exam Duty Management</span></h3>
     <p>Comprehensive exam duty management system for invigilators and staff. Efficient scheduling, real-time updates, and seamless coordination for all your examination needs.</p>
-    <div class="btn-group">
-      <a href="signup.php" class="btn btn-primary"><i class="fas fa-rocket"></i> Get Started</a>
-      <a href="about.php" class="btn btn-success"><i class="fas fa-play-circle"></i> Watch Demo</a>
-    </div>
   </div>
 </section>
 
@@ -939,10 +935,10 @@
       <h3>Contact Us</h3>
       <p><i class="fas fa-map-marker-alt"></i> Canara Records private Limited
                                                       G8,Green City,  Behind Naganakatte
-                                                      Thokkottu ,Mangalore - 575017</p>
-      <p><i class="fas fa-envelope"></i> support@examdutyportal.com</p>
-      <p><i class="fas fa-phone-alt"></i> +91 11 2345 6789</p>
-      <p><i class="fas fa-clock"></i> Mon-Sat: 9:30AM-6PM</p>
+                                                      Thokkottu,Mangalore - 575017</p>
+      <p><i class="fas fa-envelope"></i> Reachus@canararecords.co.in</p>
+      <p><i class="fas fa-phone-alt"></i> +91 7829738999</p>
+      <p><i class="fas fa-clock"></i> Mon-Sat: 9:30AM-6:00PM</p>
     </div>
   </div>
   <div class="copyright">
@@ -993,7 +989,7 @@
     
     // Update carousel position
     function updateCarousel() {
-      carousel.style.transform = translateX(-${currentIndex * 100}%);
+      carousel.style.transform = `translateX(-${currentIndex * 100}%)`;
       
       // Update indicators
       indicators.forEach((indicator, index) => {

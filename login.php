@@ -5,7 +5,8 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 // Database connection
-$conn = new mysqli("localhost", "root", "", "duty_portal");
+$conn = new mysqli("localhost", "root","", "duty_portal");
+//$conn = new mysqli("localhost", "shruthac", "VSE(8r[9kjNm29", "shruthac_duty_portal", 3306);
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
@@ -67,53 +68,10 @@ if (!isset($_SESSION['user']) && isset($_COOKIE['remember_me'])) {
         setcookie('remember_me', '', time() - 3600, '/', '', true, true); // Secure and HttpOnly
     }
 }
-
-
-// --- CAPTCHA Logic ---
-// Generate a new CAPTCHA string if one isn't already set in the session,
-// or if there was a submission error (to show a fresh CAPTCHA)
-if (!isset($_SESSION['captcha']) || (isset($_POST['submit_login']) && $errorMsg != "")) {
-    $captcha_string = substr(md5(uniqid(mt_rand(), true)), 0, 6); // 6-character random string
-    $_SESSION['captcha'] = $captcha_string; // Store it in the session
-} else {
-    $captcha_string = $_SESSION['captcha']; // Use the existing CAPTCHA string for display
-}
-
-// Generate the CAPTCHA image as Base64 data URI
-$captcha_base64 = ''; // Default empty
-
-// Check if GD library functions exist before attempting to use them
-if (function_exists('imagecreatetruecolor')) {
-    $image = imagecreatetruecolor(150, 50); // Width, Height
-    $bg_color = imagecolorallocate($image, 250, 250, 250); // Lighter background
-    imagefill($image, 0, 0, $bg_color);
-    $text_color = imagecolorallocate($image, 70, 70, 70); // Slightly softer dark grey
-
-    // Add some subtle noise (dots/lines)
-    for ($i = 0; $i < 100; $i++) {
-        $dot_color = imagecolorallocate($image, mt_rand(200, 230), mt_rand(200, 230), mt_rand(200, 230));
-        imagesetpixel($image, mt_rand(0, 149), mt_rand(0, 49), $dot_color);
-    }
-    for ($i = 0; $i < 3; $i++) {
-        $line_color = imagecolorallocate($image, mt_rand(150, 200), mt_rand(150, 200), mt_rand(150, 200));
-        imageline($image, mt_rand(0, 150), mt_rand(0, 50), mt_rand(0, 150), mt_rand(0, 50), $line_color);
-    }
-
-    $font_path = './arial.ttf'; // Make sure this path is correct
-    if (file_exists($font_path)) {
-        imagettftext($image, 24, mt_rand(-8, 8), mt_rand(10, 20), mt_rand(35, 40), $text_color, $font_path, $captcha_string);
-    } else {
-        imagestring($image, 5, 40, 15, $captcha_string, $text_color);
-        error_log("Warning: TTF font file not found at " . $font_path . ". Using basic font for CAPTCHA.");
-    }
-
-    ob_start();
-    imagepng($image);
-    $captcha_image_data = ob_get_clean();
-    imagedestroy($image);
-    $captcha_base64 = 'data:image/png;base64,' . base64_encode($captcha_image_data);
-} else {
-    $errorMsg = "CAPTCHA image cannot be generated. Please enable the GD library in your PHP configuration.";
+// Always generate a fresh captcha on first load or after failed login
+if (!isset($_SESSION['captcha']) || $_SERVER["REQUEST_METHOD"] !== "POST") {
+    $captcha_string = substr(md5(uniqid(mt_rand(), true)), 0, 6);
+    $_SESSION['captcha'] = $captcha_string;
 }
 
 
@@ -126,7 +84,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['submit_login'])) {
     // CAPTCHA verification
     if (empty($captcha_input) || strtolower($captcha_input) !== strtolower($_SESSION['captcha'])) {
         $errorMsg = "Invalid CAPTCHA. Please try again.";
-        // CAPTCHA generation logic above will handle re-generating the string and image.
+        // Regenerate captcha for next attempt
+        $captcha_string = substr(md5(uniqid(mt_rand(), true)), 0, 6);
+        $_SESSION['captcha'] = $captcha_string;
     } else {
         // CAPTCHA is correct, proceed with login
         unset($_SESSION['captcha']); // Clear CAPTCHA after successful check
@@ -144,7 +104,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['submit_login'])) {
                 if (password_verify($password, $hashedPassword)) {
                     $_SESSION['user'] = $fullname;
                     $_SESSION['is_admin'] = true;
-
                     // Set "Remember Me" cookie for admin
                     if ($remember_me) {
                         setRememberMeCookie($conn, 'admins', $user_id);
@@ -235,27 +194,6 @@ function setRememberMeCookie($conn, $table_name, $user_id) {
     }
 }
 
-// Function to update remember_me token (for token rotation - optional, but good for security)
-// function updateRememberMeToken($conn, $table_name, $user_id) {
-//     $new_token = bin2hex(random_bytes(32));
-//     $expires = time() + (30 * 24 * 60 * 60); // 30 days from now
-//     $expires_db = date('Y-m-d H:i:s', $expires);
-
-//     $stmt = $conn->prepare("UPDATE {$table_name} SET remember_token = ?, remember_token_expires_at = ? WHERE id = ?");
-//     if ($stmt) {
-//         $stmt->bind_param("ssi", $new_token, $expires_db, $user_id);
-//         $stmt->execute();
-//         $stmt->close();
-//         setcookie('remember_me', $user_id . ':' . $new_token, [
-//             'expires' => $expires,
-//             'path' => '/',
-//             'domain' => '',
-//             'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
-//             'httponly' => true,
-//             'samesite' => 'Lax'
-//         ]);
-//     }
-// }
 
 ?>
 
@@ -475,11 +413,7 @@ function setRememberMeCookie($conn, $table_name, $user_id) {
 
     <div class="captcha-container">
         <div class="captcha-image-wrapper">
-            <?php if (!empty($captcha_base64)): ?>
-                <img src="<?php echo $captcha_base64; ?>" alt="CAPTCHA Image">
-            <?php else: ?>
-                <p style="color: red; font-size: 0.9em; padding: 10px;">CAPTCHA unavailable. Check server config (GD library).</p>
-            <?php endif; ?>
+            <img id="captcha-img" src="captcha.php" alt="CAPTCHA Image">
             <i class="fas fa-sync-alt captcha-refresh" title="Refresh CAPTCHA" onclick="refreshCaptcha()"></i>
         </div>
         <input type="text" name="captcha" placeholder="Enter CAPTCHA" required autocomplete="off" />
@@ -499,7 +433,8 @@ function setRememberMeCookie($conn, $table_name, $user_id) {
 
 <script>
     function refreshCaptcha() {
-        window.location.reload();
+        const img = document.getElementById('captcha-img');
+        img.src = 'captcha.php?t=' + new Date().getTime();
     }
 </script>
 

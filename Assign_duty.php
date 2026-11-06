@@ -15,17 +15,11 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 //Database connection details
-$db_host = "localhost";
-$db_user = "root"; // Your database username
-$db_pass = ""; // Your database password
-$db_name = "duty_portal"; // Your database name
- // Your database port
-
-//  $db_host = "localhost";
-//  $db_user = "shruthac"; // Your database username
-//  $db_pass = "VSE(8r[9kjNm29"; // Your database password
-//  $db_name = "shruthac_duty_portal"; // Your database name
-//  $db_port = 3306; // Your database port
+ $db_host = "localhost";
+ $db_user = "root"; // Your database username
+ $db_pass = ""; // Your database password
+ $db_name = "duty_portal"; // Your database name
+ $db_port = 3306; // Your database port
 
 $conn = new mysqli($db_host, $db_user, $db_pass, $db_name, $db_port);
 
@@ -131,17 +125,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 try {
                     // Configure SMTP server settings
                     $mail->isSMTP();                                            // Send using SMTP
-                    $mail->Host       = 'smtp.gmail.com';                     // Gmail SMTP server
+                    $mail->Host       = 'mail.shrutha.com';                     // Gmail SMTP server
                     $mail->SMTPAuth   = true;                                   // Enable SMTP authentication
                     // !!! IMPORTANT: Replace with your ACTUAL sending Gmail address and App Password !!!
                     // Generate an App Password in your Google Account security settings.
-                    $mail->Username   = 'rakshithaachari08@gmail.com';          
-                    $mail->Password   = 'yias vlqf rkes ffig';                  
+                    $mail->Username   = 'info@shrutha.com';          
+                    $mail->Password   = 'WelcomeAbh#1234';                  
                     $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;            // Use SMTPS (SSL/TLS)
                     $mail->Port       = 465;                                    // Port for SMTPS
 
                     // Set sender and recipients
-                    $mail->setFrom('rakshithaachari08@gmail.com', 'Exam Duty Portal'); // Sender's email and name
+                    $mail->setFrom('info@shrutha.com', 'Exam Duty Portal'); // Sender's email and name
                     foreach ($adminEmails as $adminRecipientEmail) {
                         $mail->addAddress($adminRecipientEmail); // Add each admin email as a recipient
                     }

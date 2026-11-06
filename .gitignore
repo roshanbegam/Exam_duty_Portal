@@ -1,0 +1,24 @@
+# Dependencies (install via composer install)
+/vendor/
+
+# Environment / credentials - NEVER commit these
+config.php
+
+# Uploaded files
+/uploads/*
+!/uploads/.gitkeep
+
+# Logs
+*.log
+php-error.log
+
+# Composer binary
+composer.phar
+composer
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# XAMPP / local config
+*.bat

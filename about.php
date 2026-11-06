@@ -13,9 +13,11 @@
   <style>
     :root {
       --primary-color: #2f80ed;
+      --primary-dark: #2567c0;
       --secondary-color: #56ccf2;
       --dark-color: #2d3436;
       --light-color: #f5f6fa;
+      --white: #ffffff;
       --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       --transition: all 0.3s ease;
     }
@@ -32,8 +34,114 @@
       background: linear-gradient(135deg, #f3f4f6, #e2e8f0);
       color: var(--dark-color);
       line-height: 1.6;
+      padding-top: 80px; /* To account for fixed navbar */
     }
 
+    /* Enhanced Navbar */
+    .navbar {
+      background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+      color: var(--white);
+      padding: 0 5%;
+      height: 80px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow);
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      transition: var(--transition);
+    }
+    
+    .navbar.scrolled {
+      height: 70px;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 1.8rem;
+      color: var(--white);
+      text-decoration: none;
+    }
+    
+    .navbar-brand i {
+      font-size: 1.5em;
+      transition: var(--transition);
+    }
+    
+    .navbar-brand:hover i {
+      transform: rotate(-15deg);
+    }
+
+    .navbar-links {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .nav-link {
+      color: var(--white);
+      text-decoration: none;
+      padding: 12px 20px;
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .nav-link::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 2px;
+      background-color: var(--white);
+      transition: var(--transition);
+    }
+    
+    .nav-link:hover {
+      background-color: rgba(255, 255, 255, 0.15);
+    }
+    
+    .nav-link:hover::before {
+      width: 60%;
+    }
+    
+    .nav-link.active {
+      background-color: var(--white);
+      color: var(--primary-color);
+      box-shadow: var(--shadow);
+    }
+    
+    .nav-link.active::before {
+      display: none;
+    }
+    
+    .nav-link i {
+      font-size: 1.1em;
+    }
+    
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--white);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    
     /* Headings */
     h2 {
       color: var(--primary-color);
@@ -62,62 +170,6 @@
       line-height: 1.7;
       font-size: 1rem;
       color: #555;
-    }
-
-    /* Navbar */
-    nav {
-      background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
-      color: white;
-      padding: 15px 5%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: var(--shadow);
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-    }
-
-    nav .brand {
-      font-weight: 700;
-      font-size: 1.6em;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    nav .brand i {
-      font-size: 1.2em;
-    }
-
-    nav .nav-links {
-      display: flex;
-      gap: 15px;
-    }
-
-    nav button {
-      background: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 30px;
-      color: var(--primary-color);
-      font-weight: 600;
-      cursor: pointer;
-      transition: var(--transition);
-      box-shadow: var(--shadow);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    nav button:hover {
-      background: var(--primary-color);
-      color: white;
-      transform: translateY(-3px);
-    }
-    
-    nav button i {
-      font-size: 0.9em;
     }
 
     /* Section styling */
@@ -396,24 +448,38 @@
     }
 
     /* Responsive */
-    @media (max-width: 768px) {
-      nav {
-        flex-direction: column;
-        align-items: stretch;
-        padding: 15px 20px;
+    @media (max-width: 992px) {
+      .mobile-menu-btn {
+        display: block;
       }
       
-      nav .nav-links {
+      .navbar-links {
+        position: fixed;
+        top: 80px;
+        left: -100%;
+        width: 80%;
+        height: calc(100vh - 80px);
+        background: linear-gradient(to bottom, var(--primary-dark), var(--primary-color));
         flex-direction: column;
-        gap: 10px;
-        margin-top: 15px;
+        align-items: flex-start;
+        padding: 30px;
+        gap: 15px;
+        transition: var(--transition);
+        z-index: 999;
       }
       
-      nav button {
+      .navbar-links.active {
+        left: 0;
+      }
+      
+      .nav-link {
         width: 100%;
-        margin: 0;
+        padding: 15px;
+        border-radius: 8px;
       }
-      
+    }
+    
+    @media (max-width: 768px) {
       .admin {
         flex-direction: column;
         align-items: flex-start;
@@ -429,20 +495,48 @@
         padding: 25px 20px;
         margin: 20px 15px;
       }
+      
+      .navbar {
+        padding: 0 15px;
+      }
+      
+      .navbar-brand {
+        font-size: 1.5rem;
+      }
     }
   </style>
 </head>
 
 <body>
 
-<!-- Navbar -->
-<nav>
-  <div class="brand"><i class="fas fa-graduation-cap"></i> Exam Portal</div>
-  <div class="nav-links">
-    <button onclick="location.href='home.php'"><i class="fas fa-home"></i> Home</button>
-    <button onclick="scrollToSection('about')"><i class="fas fa-info-circle"></i> About</button>
-    <button onclick="scrollToSection('duties')"><i class="fas fa-clipboard-list"></i> Duties</button>
-    <button onclick="scrollToSection('contact')"><i class="fas fa-envelope"></i> Contact</button>
+<!-- Enhanced Navbar -->
+<nav class="navbar">
+  <a href="home.php" class="navbar-brand">
+    <i class="fas fa-graduation-cap"></i>
+    <span>Exam Portal</span>
+  </a>
+  
+  <button class="mobile-menu-btn" id="mobileMenuBtn">
+    <i class="fas fa-bars"></i>
+  </button>
+  
+  <div class="navbar-links" id="navbarLinks">
+    <a href="home.php" class="nav-link">
+      <i class="fas fa-home"></i>
+      <span>Home</span>
+    </a>
+    <a href="#about" class="nav-link">
+      <i class="fas fa-info-circle"></i>
+      <span>About</span>
+    </a>
+    <a href="#duties" class="nav-link">
+      <i class="fas fa-clipboard-list"></i>
+      <span>Duties</span>
+    </a>
+    <a href="#contact" class="nav-link">
+      <i class="fas fa-envelope"></i>
+      <span>Contact</span>
+    </a>
   </div>
 </nav>
 
@@ -516,7 +610,7 @@
       <i class="fas fa-envelope"></i>
       <h3>Email</h3>
       <p>examportal@gmail.com</p>
-      <p>support@examdutyportal.com</p>
+      <p>support@examportal.edu</p>
     </div>
     <div class="contact-card">
       <i class="fas fa-phone"></i>
@@ -527,14 +621,14 @@
     <div class="contact-card">
       <i class="fas fa-map-marker-alt"></i>
       <h3>Address</h3>
-      <p>Canara Records private Limited
-         G8,Green City,  Behind Naganakatte
-         Thokkottu ,Mangalore - 575017</p>
+      <p>123, Education Lane</p>
+      <p>New Delhi, India - 110001</p>
     </div>
     <div class="contact-card">
       <i class="fas fa-clock"></i>
       <h3>Working Hours</h3>
-      <p>Monday - Saturday: 9:30AM - 6PM</p>
+      <p>Monday - Friday: 9AM - 6PM</p>
+      <p>Saturday: 10AM - 4PM</p>
     </div>
   </div>
   
@@ -609,6 +703,27 @@
 </footer>
 
 <script>
+  // Mobile menu toggle
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  const navbarLinks = document.getElementById('navbarLinks');
+  
+  mobileMenuBtn.addEventListener('click', () => {
+    navbarLinks.classList.toggle('active');
+    mobileMenuBtn.innerHTML = navbarLinks.classList.contains('active') 
+      ? '<i class="fas fa-times"></i>' 
+      : '<i class="fas fa-bars"></i>';
+  });
+
+  // Close mobile menu when clicking on a link
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+      if (navbarLinks.classList.contains('active')) {
+        navbarLinks.classList.remove('active');
+        mobileMenuBtn.innerHTML = '<i class="fas fa-bars"></i>';
+      }
+    });
+  });
+
   // Smooth scrolling
   function scrollToSection(id) {
     document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
@@ -619,6 +734,40 @@
     e.preventDefault();
     alert('Thank you for your message! We will get back to you soon.');
     this.reset();
+  });
+  
+  // Navbar scroll effect
+  window.addEventListener('scroll', () => {
+    const navbar = document.querySelector('.navbar');
+    if (window.scrollY > 50) {
+      navbar.classList.add('scrolled');
+    } else {
+      navbar.classList.remove('scrolled');
+    }
+  });
+  
+  // Set active nav link based on scroll position
+  const sections = document.querySelectorAll('.section');
+  const navLinks = document.querySelectorAll('.nav-link');
+  
+  window.addEventListener('scroll', () => {
+    let current = '';
+    
+    sections.forEach(section => {
+      const sectionTop = section.offsetTop;
+      const sectionHeight = section.clientHeight;
+      
+      if (pageYOffset >= (sectionTop - 100)) {
+        current = section.getAttribute('id');
+      }
+    });
+    
+    navLinks.forEach(link => {
+      link.classList.remove('active');
+      if (link.getAttribute('href').includes(current)) {
+        link.classList.add('active');
+      }
+    });
   });
 </script>
 

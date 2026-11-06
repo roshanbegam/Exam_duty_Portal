@@ -14,11 +14,7 @@ $dbHost = "localhost";
 $dbUser = "root";
 $dbPass = "";
 $dbName = "duty_portal";
-//  $dbHost = "localhost";
-//  $dbUser = "shruthac"; // Your database username
-//  $dbPass = "VSE(8r[9kjNm29"; // Your database password
-//  $dbName = "shruthac_duty_portal"; // Your database name
-//  $dbPort = 3306; // Your database port
+$dbPort = 3306;
 $conn = new mysqli($dbHost, $dbUser, $dbPass, $dbName, $dbPort);
 
 if ($conn->connect_error) {

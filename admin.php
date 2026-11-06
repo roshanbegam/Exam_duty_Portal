@@ -165,7 +165,6 @@ $conn->close();
             color: #333;
             line-height: 1.6;
             overflow-x: hidden;
-            min-height: 100vh;
         }
 
         .dashboard-container {
@@ -178,8 +177,7 @@ $conn->close();
             width: 280px;
             background: var(--sidebar-bg);
             color: white;
-            position: fixed;
-            height: 100vh;
+            position: relative;
             z-index: 10;
             box-shadow: 5px 0 15px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
@@ -203,8 +201,6 @@ $conn->close();
 
         .sidebar-menu {
             padding: 15px 0;
-            height: calc(100vh - 100px);
-            overflow-y: auto;
         }
 
         .menu-item {
@@ -245,9 +241,6 @@ $conn->close();
             flex: 1;
             padding: 25px;
             transition: all 0.3s ease;
-            margin-left: 280px;
-            width: calc(100% - 280px);
-            min-height: 100vh;
         }
 
         .header {
@@ -264,16 +257,19 @@ $conn->close();
         .user-info {
             display: flex;
             align-items: center;
-            gap: 15px;
         }
 
-        .time-display {
-            background: rgba(67, 97, 238, 0.1);
-            padding: 8px 15px;
-            border-radius: 30px;
+        .weather-info, .language-time {
+            display: flex;
+            align-items: center;
+            margin-left: 20px;
             font-size: 0.9rem;
-            color: var(--primary);
-            font-weight: 500;
+            color: var(--gray);
+        }
+
+        .weather-info i, .language-time i {
+            margin-right: 8px;
+            color: var(--accent);
         }
 
         /* Content Sections */
@@ -668,23 +664,18 @@ $conn->close();
                 margin-right: 0;
                 font-size: 1.3rem;
             }
-            
-            .main-content {
-                margin-left: 80px;
-                width: calc(100% - 80px);
-            }
         }
 
         @media (max-width: 768px) {
             .header {
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 15px;
             }
             
             .user-info {
                 width: 100%;
                 justify-content: space-between;
+                margin-top: 15px;
             }
             
             .action-buttons {
@@ -708,16 +699,6 @@ $conn->close();
         }
 
         @media (max-width: 576px) {
-            .sidebar {
-                width: 0;
-                overflow: hidden;
-            }
-            
-            .main-content {
-                margin-left: 0;
-                width: 100%;
-            }
-            
             .user-actions {
                 flex-direction: column;
                 gap: 5px;
@@ -800,26 +781,25 @@ $conn->close();
         <!-- Main Content Area -->
         <div class="main-content">
             <div class="header">
-                <h1><?php 
-                    $sectionTitles = [
-                        'dashboard' => 'Dashboard',
-                        'add_admin' => 'Add New Admin',
-                        'manage_exam' => 'Exam Management',
-                        'verify_users' => 'User Verification',
-                        'view_attendance' => 'Attendance Submissions',
-                        'contact' => 'Contact Support'
-                    ];
-                    echo $sectionTitles[$current_section] ?? 'Admin Panel';
-                ?></h1>
                 <div class="user-info">
-                    <div class="time-display" id="current-time">
-                        <?php echo date("h:i A, F j, Y"); ?>
+                    <div class="weather-info">
+                        <i class="fas fa-cloud-sun"></i>
+                        <span>23°C Partly cloudy</span>
+                    </div>
+                    
+                    <div class="language-time">
+                        <i class="fas fa-globe"></i>
+                        <span>ENG US</span>
+                        <span style="margin: 0 10px;">|</span>
+                        <span id="current-time"><?php echo date("h:i A m/d/Y"); ?></span>
                     </div>
                 </div>
             </div>
             
             <!-- Dashboard Section -->
             <div id="dashboard-section" class="content-section <?php echo $current_section == 'dashboard' ? 'active' : ''; ?>">
+                <h1 class="section-title">Dashboard Overview</h1>
+                
                 <div class="card">
                     <h2 class="card-title">Welcome to Admin Dashboard</h2>
                     <p>You have full administrative privileges to manage the system and its users.</p>
@@ -852,6 +832,8 @@ $conn->close();
             
             <!-- Add Admin Section -->
             <div id="add-admin-section" class="content-section <?php echo $current_section == 'add_admin' ? 'active' : ''; ?>">
+                <h1 class="section-title">Add New Admin</h1>
+                
                 <div class="card">
                     <?php if ($message): ?>
                         <div class="alert <?php echo strpos($message, 'successfully') !== false ? 'alert-success' : 'alert-danger'; ?>">
@@ -884,6 +866,8 @@ $conn->close();
             
             <!-- Manage Exam Section -->
             <div id="manage-exam-section" class="content-section <?php echo $current_section == 'manage_exam' ? 'active' : ''; ?>">
+                <h1 class="section-title">Exam Management</h1>
+                
                 <div class="card">
                     <?php if ($message): ?>
                         <div class="alert <?php echo strpos($message, 'successfully') !== false ? 'alert-success' : 'alert-danger'; ?>">
@@ -923,6 +907,8 @@ $conn->close();
             
             <!-- User Verification Section -->
             <div id="verify-users-section" class="content-section <?php echo $current_section == 'verify_users' ? 'active' : ''; ?>">
+                <h1 class="section-title">User Verification</h1>
+                
                 <div class="card">
                     <?php if ($message): ?>
                         <div class="alert <?php echo strpos($message, 'successfully') !== false ? 'alert-success' : 'alert-danger'; ?>">
@@ -1012,6 +998,7 @@ $conn->close();
             
             <!-- Attendance Submissions Section -->
             <div id="attendance-section" class="content-section <?php echo $current_section == 'view_attendance' ? 'active' : ''; ?>">
+                <h1 class="section-title">Attendance Submissions</h1>
                 <div class="card">
                     <table class="exam-table">
                         <thead>
@@ -1028,7 +1015,6 @@ $conn->close();
                             <?php
                             if($current_section == 'view_attendance') {
                                 $conn = new mysqli("localhost", "root", "", "duty_portal");
-                                //$conn = new mysqli("localhost", "shruthac", "VSE(8r[9kjNm29", "shruthac_duty_portal", 3306);
                                 $res = $conn->query("SELECT * FROM attendance ORDER BY id DESC");
                                 while ($row = $res->fetch_assoc()):
                             ?>
@@ -1052,6 +1038,8 @@ $conn->close();
             
             <!-- Contact Section -->
             <div id="contact-section" class="content-section <?php echo $current_section == 'contact' ? 'active' : ''; ?>">
+                <h1 class="section-title">Contact Support</h1>
+                
                 <div class="card">
                     <h2 class="card-title">Contact Information</h2>
                     <p><i class="fas fa-envelope" style="color: var(--accent); margin-right: 10px;"></i> admin@example.com</p>
@@ -1070,7 +1058,7 @@ $conn->close();
                 hour: '2-digit', 
                 minute: '2-digit', 
                 hour12: true,
-                month: 'long',
+                month: 'numeric',
                 day: 'numeric',
                 year: 'numeric'
             };

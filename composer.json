@@ -10,10 +10,12 @@
     },
     "authors": [
         {
-            "name": "Roshan",
-            "email": "roshanb000b@gmail.com"
+            "name": "Rakshitha",
+            "email": "rakshithaachari08@gmail.com"
         }
     ],
     "minimum-stability": "stable",
-    "require": {}
+    "require": {
+        "phpmailer/phpmailer": "^6.10"
+    }
 }

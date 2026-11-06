@@ -4,17 +4,12 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// Include PHPMailer classes
+// Include PHPMailer via Composer autoload
+require 'vendor/autoload.php';
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-use PHPMailer\PHPMailer\SMTP; // Make sure this is also included
-
-// Adjust these paths based on where you placed the PHPMailer 'src' folder
-// Assuming 'forgot_password.php' is in 'C:\xampp\htdocs\exam_duty\'
-// and your PHPMailer 'src' is in 'C:\xampp\htdocs\exam_duty\vendor\phpmailer\phpmailer\src\'
-require 'vendor/phpmailer/phpmailer/src/Exception.php';
-require 'vendor/phpmailer/phpmailer/src/PHPMailer.php';
-require 'vendor/phpmailer/phpmailer/src/SMTP.php'; // Important for SMTP!
+use PHPMailer\PHPMailer\SMTP;
 
 $conn = new mysqli("localhost", "root", "", "duty_portal");
 if ($conn->connect_error) {
@@ -84,23 +79,23 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     try {
                         // Server settings
                         $mail->isSMTP();                                            // Send using SMTP
-                        $mail->Host       = 'smtp.gmail.com';                       // Set the SMTP server to send through
+                        $mail->Host       = 'mail.shrutha.com';                       // Set the SMTP server to send through
                         $mail->SMTPAuth   = true;                                   // Enable SMTP authentication
-                        $mail->Username   = 'roshanb000b@gmail.com';                // SMTP username (YOUR GMAIL ADDRESS)
-                        $mail->Password   = 'cdza mteg fknq wljw';                    // SMTP password (YOUR GMAIL APP PASSWORD)
+                        $mail->Username   = 'info@shrutha.com';                // SMTP username (YOUR GMAIL ADDRESS)
+                        $mail->Password   = 'WelcomeAbh#1234';                    // SMTP password (YOUR GMAIL APP PASSWORD)
                                                                                     // IMPORTANT: For Gmail, you MUST use an App Password, not your regular Gmail password.
                                                                                     // See https://support.google.com/accounts/answer/185833
                         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;            // Enable implicit TLS encryption (use SMTPS for port 465)
-                        $mail->Port       = 465;                                    // TCP port to connect to; use 587 if `SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS`
+                        $mail->Port       = 465;                                    // TCP port to connect to; use 587 if SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS
 
                         // Recipients
-                        $mail->setFrom('roshanb000b@gmail.com', 'Exam Duty Portal'); // Sender's email and name
+                        $mail->setFrom('info@shrutha.com', 'Exam Duty Portal'); // Sender's email and name
                         $mail->addAddress($email);                                  // Add a recipient
 
                         // Content
                         $mail->isHTML(false);                                       // Set email format to plain text
                         $mail->Subject = 'Password Reset Request for Exam Duty Portal';
-                        $reset_link = "http://" . $_SERVER['HTTP_HOST'] . "/exam_duty/reset_password.php?token=" . $token;
+                        $reset_link = "https://shrutha.com/exam/Exam_duty/reset_password.php?token=" . $token;
                         $body = "Dear User,\n\n";
                         $body .= "You have requested to reset your password for the Exam Duty Portal.\n";
                         $body .= "Please click on the following link to reset your password:\n";
@@ -110,7 +105,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         $mail->Body = $body;
 
                         $mail->send();
-                        $message = "A password reset link has been sent to your email address. Please check your inbox (and spam folder).";
+                        $message = "A password reset link has been sent to your email address. Please check..";
                         $messageType = "success";
                     } catch (Exception $e) {
                         $message = "Failed to send reset email. Mailer Error: {$mail->ErrorInfo}";

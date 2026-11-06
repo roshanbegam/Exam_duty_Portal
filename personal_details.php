@@ -19,6 +19,7 @@ $dbName = "duty_portal";
 //  $dbPass = "VSE(8r[9kjNm29"; // Your database password
 //  $dbName = "shruthac_duty_portal"; // Your database name
 //  $dbPort = 3306; // Your database port
+
 $conn = new mysqli($dbHost, $dbUser, $dbPass, $dbName);
 
 if ($conn->connect_error) {
@@ -30,7 +31,6 @@ if ($conn->connect_error) {
     ]));
 }
 
-// Set charset to utf8mb4 for full Unicode support
 $conn->set_charset("utf8mb4");
 
 // Initialize variables
@@ -73,6 +73,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
             exit;
         }
 
+        if ($_GET['action'] === 'fetch-bank-details') {
+            $ifsc = strtoupper(trim($data['ifsc'] ?? ''));
+            
+            if (!preg_match('/^[A-Z]{4}0[A-Z0-9]{6}$/', $ifsc)) {
+                echo json_encode(['success' => false, 'message' => 'Invalid IFSC format']);
+                exit;
+            }
+
+            $response = @file_get_contents("https://ifsc.razorpay.com/$ifsc");
+            if ($response === FALSE) {
+                echo json_encode(['success' => false, 'message' => 'Failed to fetch bank details']);
+                exit;
+            }
+
+            $bankDetails = json_decode($response, true);
+            if (!$bankDetails) {
+                echo json_encode(['success' => false, 'message' => 'Bank details not found']);
+                exit;
+            }
+
+            echo json_encode([
+                'success' => true,
+                'bankName' => $bankDetails['BANK'] ?? '',
+                'branch' => $bankDetails['BRANCH'] ?? '',
+                'address' => $bankDetails['ADDRESS'] ?? '',
+                'city' => $bankDetails['CITY'] ?? '',
+                'state' => $bankDetails['STATE'] ?? ''
+            ]);
+            exit;
+        }
+
         if ($_GET['action'] === 'send-otp') {
             $email = $data['email'] ?? '';
             
@@ -81,27 +112,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
                 exit;
             }
 
-            // Generate a 6-digit OTP
             $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
             
-            // Store OTP in session with timestamp
             $_SESSION['otp'][$email] = [
                 'code' => $otp,
                 'timestamp' => time()
             ];
 
-            // Send OTP via email
             $mail = new PHPMailer(true);
             try {
                 $mail->isSMTP();
-                $mail->Host = 'smtp.gmail.com';
+                $mail->Host = 'mail.shrutha.com';
                 $mail->SMTPAuth = true;
-                $mail->Username = 'rakshithaachari08@gmail.com';
-                $mail->Password = 'yias vlqf rkes ffig';
+                $mail->Username = 'info@shrutha.com';
+                $mail->Password = 'WelcomeAbh#1234';
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-                $mail->Port = 587;
+                $mail->Port = 465;
 
-                $mail->setFrom('rakshithaachari08@gmail.com', 'Duty Portal');
+                $mail->setFrom('info@shrutha.com', 'Exam Duty Portal');
                 $mail->addAddress($email);
                 $mail->isHTML(true);
                 $mail->Subject = 'Your OTP for Registration';
@@ -127,7 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
 
             $storedOtp = $_SESSION['otp'][$email]['code'] ?? null;
             $storedTimestamp = $_SESSION['otp'][$email]['timestamp'] ?? 0;
-            $expiryTime = 300; // 5 minutes
+            $expiryTime = 300;
 
             if (!$storedOtp) {
                 echo json_encode(['success' => false, 'message' => 'OTP verification failed. Please request a new OTP.']);
@@ -145,14 +173,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
                 exit;
             }
 
-            // If we get here, verification is successful
             unset($_SESSION['otp'][$email]);
             echo json_encode(['success' => true, 'message' => 'OTP Verified successfully!']);
             exit;
         }
 
         if ($_GET['action'] === 'submit-form') {
-            // Validate and sanitize all inputs
             $errors = [];
             $requiredFields = [
                 'firstName', 'lastName', 'dob', 'email', 
@@ -171,7 +197,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
                 exit;
             }
 
-            // Process the form data
             $firstName = htmlspecialchars($data['firstName']);
             $lastName = htmlspecialchars($data['lastName']);
             $dob = htmlspecialchars($data['dob']);
@@ -188,7 +213,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
             $examId = htmlspecialchars($data['examId'] ?? '');
             $isEdit = $data['isEdit'] ?? false;
 
-            // Handle file uploads
             $photoBase64 = $data['photo'] ?? '';
             $aadhaarBase64 = $data['aadhaar'] ?? '';
             $panPhotoBase64 = $data['panPhoto'] ?? '';
@@ -231,18 +255,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
                     $newUserId = $isEdit ? null : $conn->insert_id;
                     $uniqueRegistrationId = $isEdit ? '' : "REG-" . str_pad($newUserId, 6, '0', STR_PAD_LEFT);
 
-                    // Send confirmation email
                     $mail = new PHPMailer(true);
                     try {
                         $mail->isSMTP();
-                        $mail->Host = 'smtp.gmail.com';
+                        $mail->Host = 'mail.shrutha.com';
                         $mail->SMTPAuth = true;
-                        $mail->Username = 'rakshithaachari08@gmail.com';
-                        $mail->Password = 'yias vlqf rkes ffig';
+                        $mail->Username = 'info@shrutha.com';
+                        $mail->Password = 'WelcomeAbh#1234';
                         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-                        $mail->Port = 587;
+                        $mail->Port = 465;
 
-                        $mail->setFrom('rakshithaachari08@gmail.com', 'Duty Portal');
+                        $mail->setFrom('info@shrutha.com', 'Exam Duty Portal');
                         $mail->addAddress($email);
                         $mail->isHTML(true);
                         $mail->Subject = $isEdit ? 'Your Registration Details Have Been Updated' : 'Your Registration Details';
@@ -796,6 +819,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
             font-style: italic;
         }
 
+        /* Bank Details Styles */
+        .bank-details-container {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        .bank-detail-row {
+            display: flex;
+            margin-bottom: 8px;
+        }
+        .bank-detail-label {
+            font-weight: 500;
+            min-width: 80px;
+            color: #495057;
+        }
+        .bank-detail-value {
+            color: #212529;
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 10px;
@@ -982,8 +1026,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
                     </div>
                     <div class="form-group">
                         <label for="ifsc" class="required">IFSC Code</label>
-                        <input type="text" id="ifsc" name="ifsc" value="<?= htmlspecialchars($existingData['ifsc'] ?? '') ?>" required>
+                        <div class="otp-group">
+                            <input type="text" id="ifsc" name="ifsc" value="<?= htmlspecialchars($existingData['ifsc'] ?? '') ?>" required>
+                            <button type="button" id="fetchBankBtn" class="btn-otp">Fetch Details</button>
+                        </div>
                         <div id="ifscError" class="error-message"></div>
+                        <div id="bankDetailsContainer" class="bank-details-container hidden">
+                            <div class="bank-detail-row">
+                                <span class="bank-detail-label">Bank:</span>
+                                <span id="bankNameDisplay" class="bank-detail-value"></span>
+                            </div>
+                            <div class="bank-detail-row">
+                                <span class="bank-detail-label">Branch:</span>
+                                <span id="bankBranchDisplay" class="bank-detail-value"></span>
+                            </div>
+                            <div class="bank-detail-row">
+                                <span class="bank-detail-label">Address:</span>
+                                <span id="bankAddressDisplay" class="bank-detail-value"></span>
+                            </div>
+                            <div class="bank-detail-row">
+                                <span class="bank-detail-label">City:</span>
+                                <span id="bankCityDisplay" class="bank-detail-value"></span>
+                            </div>
+                            <div class="bank-detail-row">
+                                <span class="bank-detail-label">State:</span>
+                                <span id="bankStateDisplay" class="bank-detail-value"></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="btn-group">
@@ -1186,7 +1255,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
         function validateStep(stepNum) {
             let isValid = true;
             const inputsToValidate = [];
-            const errorMessages = {};
 
             if (stepNum === 1) {
                 inputsToValidate.push(
@@ -1201,7 +1269,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
                     { id: 'contact1', pattern: /^\d{10,15}$/, msg: 'Valid 10-15 digit phone number required' },
                     { id: 'bankName', pattern: /.+/, msg: 'Bank name is required' },
                     { id: 'accountNumber', pattern: /^\d{9,18}$/, msg: 'Valid 9-18 digit account number required' },
-                    { id: 'ifsc', pattern: /^[A-Z]{4}0[A-Z0-9]{6}$/, msg: 'Valid IFSC code required' }
+                    { id: 'ifsc', pattern: /^[A-Za-z]{4}0[A-Za-z0-9]{6}$/, msg: 'Valid IFSC code required (4 letters, 0, then 6 alphanumeric)' }
                 );
             } else if (stepNum === 3) {
                 inputsToValidate.push(
@@ -1209,7 +1277,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
                     { id: 'panNumber', pattern: /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, msg: 'Valid PAN number required' }
                 );
             } else if (stepNum === 4 && !isEditMode) {
-                // Only validate files if not in edit mode
                 inputsToValidate.push(
                     { id: 'photo', type: 'file', msg: 'Photo is required' },
                     { id: 'aadhaarInput', type: 'file', msg: 'Aadhaar document is required' },
@@ -1217,7 +1284,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
                 );
             }
 
-            // Validate each input
             inputsToValidate.forEach(input => {
                 const element = document.getElementById(input.id);
                 if (!element) return;
@@ -1245,10 +1311,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
                     errorElement.style.display = 'block';
                     isValid = false;
                     
-                    // Scroll to first error
                     if (isValid === false) {
                         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        isValid = false; // This line is redundant but kept for clarity
                     }
                 } else {
                     element.classList.remove('input-error');
@@ -1259,7 +1323,77 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
             return isValid;
         }
 
-        // Age validation function
+        // IFSC Bank Details Fetching
+        document.getElementById('fetchBankBtn').addEventListener('click', async function() {
+            const ifscInput = document.getElementById('ifsc');
+            const ifsc = ifscInput.value.trim().toUpperCase();
+            const ifscError = document.getElementById('ifscError');
+            const bankDetailsContainer = document.getElementById('bankDetailsContainer');
+            
+            // Validate IFSC format
+            if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc)) {
+                ifscError.textContent = 'Invalid IFSC format (e.g., SBIN0001234)';
+                ifscError.style.display = 'block';
+                ifscInput.classList.add('input-error');
+                bankDetailsContainer.classList.add('hidden');
+                return;
+            }
+            
+            const fetchBtn = this;
+            fetchBtn.disabled = true;
+            fetchBtn.textContent = 'Fetching...';
+            ifscError.style.display = 'none';
+            ifscInput.classList.remove('input-error');
+            
+            try {
+                const response = await fetch('?action=fetch-bank-details', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ ifsc })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update bank name field
+                    document.getElementById('bankName').value = data.bankName;
+                    
+                    // Display bank details
+                    document.getElementById('bankNameDisplay').textContent = data.bankName || 'N/A';
+                    document.getElementById('bankBranchDisplay').textContent = data.branch || 'N/A';
+                    document.getElementById('bankAddressDisplay').textContent = data.address || 'N/A';
+                    document.getElementById('bankCityDisplay').textContent = data.city || 'N/A';
+                    document.getElementById('bankStateDisplay').textContent = data.state || 'N/A';
+                    
+                    bankDetailsContainer.classList.remove('hidden');
+                } else {
+                    throw new Error(data.message || 'Failed to fetch bank details');
+                }
+            } catch (error) {
+                ifscError.textContent = error.message;
+                ifscError.style.display = 'block';
+                ifscInput.classList.add('input-error');
+                bankDetailsContainer.classList.add('hidden');
+            } finally {
+                fetchBtn.disabled = false;
+                fetchBtn.textContent = 'Fetch Details';
+            }
+        });
+
+        // Age validation
+        document.getElementById('dob').addEventListener('change', function() {
+            if (!validateAge(this.value)) {
+                showCustomModal('Age Restriction', 'You must be at least 18 years old to register.', false);
+                this.value = '';
+                document.getElementById('dobError').style.display = 'block';
+                document.getElementById('dobError').textContent = 'You must be at least 18 years old.';
+            } else {
+                document.getElementById('dobError').style.display = 'none';
+            }
+        });
+
         function validateAge(dob) {
             if (!dob) return false;
             const today = new Date();
@@ -1274,40 +1408,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
             return age >= 18;
         }
 
-        // Add event listener to DOB field
-        document.getElementById('dob').addEventListener('change', function() {
-            if (!validateAge(this.value)) {
-                showCustomModal('Age Restriction', 'You must be at least 18 years old to register.', false);
-                this.value = '';
-                document.getElementById('dobError').style.display = 'block';
-                document.getElementById('dobError').textContent = 'You must be at least 18 years old.';
-            } else {
-                document.getElementById('dobError').style.display = 'none';
-            }
-        });
-
-        // Navigation functions
+        // Navigation
         function goToStep(step) {
-            if (step < 1 || step > 5) return;
-            
-            // Validate current step before moving forward
-            if (step > currentStep && !validateStep(currentStep)) {
+            if (step < 1 || step > 5) {
                 return;
+            }
+            
+            if (step > currentStep) {
+                const isValid = validateStep(currentStep);
+                if (!isValid) {
+                    return;
+                }
             }
             
             currentStep = step;
             updateFormStep();
+            
+            if (currentStep === 3) {
+                const step3Element = document.querySelector('.form-step[data-step="3"]');
+                if (step3Element) {
+                    step3Element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
         }
 
-        // Set up navigation button event listeners
         document.querySelectorAll('.btn-next').forEach(btn => {
-            btn.addEventListener('click', () => goToStep(currentStep + 1));
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                goToStep(currentStep + 1);
+            });
         });
 
         document.querySelectorAll('.btn-prev').forEach(btn => {
-            btn.addEventListener('click', () => goToStep(currentStep - 1));
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                goToStep(currentStep - 1);
+            });
         });
 
+        // OTP Handling
         let otpTimerInterval;
         const otpTimerDisplay = document.getElementById('otpTimer');
         const sendOtpBtn = document.getElementById('sendOtpBtn');
@@ -1442,6 +1581,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
             }
         });
 
+        // File Upload Handling
         document.querySelectorAll('.upload-container').forEach(container => {
             const fileInput = container.querySelector('input[type="file"]');
             const fileNameSpan = container.querySelector('.file-name');
@@ -1493,6 +1633,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
             });
         });
 
+        // Form Submission
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -1500,7 +1641,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
                 return;
             }
 
-            // Validate age again before submission
             const dob = document.getElementById('dob').value;
             if (dob && !validateAge(dob)) {
                 showCustomModal('Age Restriction', 'You must be at least 18 years old to register.', false);
@@ -1516,7 +1656,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
             finalSubmitBtn.disabled = true;
             finalSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (isEditMode ? 'Updating...' : 'Submitting...');
 
-            // Gather all form data
             const formData = {
                 firstName: document.getElementById('firstName').value,
                 lastName: document.getElementById('lastName').value,
@@ -1536,13 +1675,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
                 isEdit: isEditMode
             };
 
-            // Convert files to Base64
             const photoFile = document.getElementById('photo').files[0];
             const aadhaarFile = document.getElementById('aadhaarInput').files[0];
             const panFile = document.getElementById('panPhoto').files[0];
 
             try {
-                // Function to convert file to Base64
                 const fileToBase64 = (file) => {
                     return new Promise((resolve, reject) => {
                         if (!file) {
@@ -1556,19 +1693,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
                     });
                 };
 
-                // Convert all files to Base64
                 const [photoBase64, aadhaarBase64, panBase64] = await Promise.all([
                     fileToBase64(photoFile),
                     fileToBase64(aadhaarFile),
                     fileToBase64(panFile)
                 ]);
 
-                // Add Base64 strings to form data
                 if (photoBase64) formData.photo = photoBase64;
                 if (aadhaarBase64) formData.aadhaar = aadhaarBase64;
                 if (panBase64) formData.panPhoto = panBase64;
 
-                // Submit the form data via AJAX
                 const response = await fetch('?action=submit-form', {
                     method: 'POST',
                     headers: { 
@@ -1587,7 +1721,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
                 if (data.success) {
                     showCustomModal(
                         isEditMode ? 'Registration Updated!' : 'Application Submitted!', 
-                        data.message + (data.registrationId ? `Your Registration ID: ${data.registrationId}` : ''), 
+                        data.message + (data.registrationId ? ` Your Registration ID: ${data.registrationId}` : ''), 
                         true
                     );
                 } else {
@@ -1603,7 +1737,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
                 finalSubmitBtn.disabled = false;
                 finalSubmitBtn.innerHTML = isEditMode ? '<i class="fas fa-edit"></i> Update Registration' : '<i class="fas fa-check-circle"></i> Submit Application';
             }
+        });const statesAndDistricts = {
+    "Andhra Pradesh": ["Anantapur", "Chittoor", "East Godavari", "Guntur", "Krishna", "Kurnool", "Nellore", "Prakasam", "Srikakulam", "Visakhapatnam", "Vizianagaram", "West Godavari", "YSR Kadapa"],
+    "Arunachal Pradesh": ["Tawang", "West Kameng", "East Kameng", "Papum Pare", "Kurung Kumey", "Kra Daadi", "Lower Subansiri", "Upper Subansiri", "West Siang", "East Siang", "Siang", "Upper Siang", "Lower Dibang Valley", "Dibang Valley", "Anjaw", "Lohit", "Namsai", "Changlang", "Tirap", "Longding"],
+    "Assam": ["Baksa", "Barpeta", "Biswanath", "Bongaigaon", "Cachar", "Charaideo", "Chirang", "Darrang", "Dhemaji", "Dhubri", "Dibrugarh", "Dima Hasao (North Cachar Hills)", "Goalpara", "Golaghat", "Hailakandi", "Hojai", "Jorhat", "Kamrup Metropolitan", "Kamrup", "Karbi Anglong", "Karimganj", "Kokrajhar", "Lakhimpur", "Majuli", "Morigaon", "Nagaon", "Nalbari", "Sivasagar", "Sonitpur", "South Salmara-Mankachar", "Tinsukia", "Udalguri", "West Karbi Anglong"],
+    "Bihar": ["Araria", "Arwal", "Aurangabad", "Banka", "Begusarai", "Bhagalpur", "Bhojpur", "Buxar", "Darbhanga", "East Champaran (Motihari)", "Gaya", "Gopalganj", "Jamui", "Jehanabad", "Kaimur (Bhabua)", "Katihar", "Khagaria", "Kishanganj", "Lakhisarai", "Madhepura", "Madhubani", "Munger", "Muzaffarpur", "Nalanda", "Nawada", "Patna", "Purnia", "Rohtas", "Saharsa", "Samastipur", "Saran", "Sheikhpura", "Sheohar", "Sitamarhi", "Siwan", "Supaul", "Vaishali", "West Champaran"],
+    "Chhattisgarh": ["Balod", "Baloda Bazar", "Balrampur", "Bastar", "Bemetara", "Bijapur", "Bilaspur", "Dantewada (South Bastar)", "Dhamtari", "Durg", "Gariaband", "Gaurela Pendra Marwahi", "Janjgir-Champa", "Jashpur", "Kabirdham (Kawardha)", "Kanker (North Bastar)", "Kondagaon", "Korba", "Koriya", "Mahasamund", "Mungeli", "Narayanpur", "Raigarh", "Raipur", "Rajnandgaon", "Sukma", "Surajpur", "Surguja"],
+    "Goa": ["North Goa", "South Goa"],
+    "Gujarat": ["Ahmedabad", "Amreli", "Anand", "Aravalli", "Banaskantha", "Bharuch", "Bhavnagar", "Botad", "Chhota Udepur", "Dahod", "Dang", "Devbhoomi Dwarka", "Gandhinagar", "Gir Somnath", "Jamnagar", "Junagadh", "Kutch", "Kheda", "Mahesana", "Mahisagar", "Morbi", "Narmada", "Navsari", "Panchmahal", "Patan", "Porbandar", "Rajkot", "Sabarkantha", "Surat", "Surendranagar", "Tapi", "Vadodara", "Valsad"],
+    "Haryana": ["Ambala", "Bhiwani", "Charkhi Dadri", "Faridabad", "Fatehabad", "Gurugram", "Hisar", "Jhajjar", "Jind", "Kaithal", "Karnal", "Kurukshetra", "Mahendragarh", "Nuh", "Palwal", "Panchkula", "Panipat", "Rewari", "Rohtak", "Sirsa", "Sonipat", "Yamunanagar"],
+    "Himachal Pradesh": ["Bilaspur", "Chamba", "Hamirpur", "Kangra", "Kinnaur", "Kullu", "Lahaul and Spiti", "Mandi", "Shimla", "Sirmaur", "Solan", "Una"],
+    "Jharkhand": ["Bokaro", "Chatra", "Deoghar", "Dhanbad", "Dumka", "East Singhbhum", "Garhwa", "Giridih", "Godda", "Gumla", "Hazaribagh", "Jamtara", "Khunti", "Koderma", "Latehar", "Lohardaga", "Pakur", "Palamu", "Ramgarh", "Ranchi", "Sahebganj", "Seraikela Kharsawan", "Simdega", "West Singhbhum"],
+    "Karnataka": ["Bagalkot", "Ballari (Bellary)", "Belagavi (Belgaum)", "Bengaluru Rural", "Bengaluru Urban", "Bidar", "Chamarajanagar", "Chikkaballapur", "Chikkamagaluru (Chikmagalur)", "Chitradurga", "Dakshina Kannada", "Davangere", "Dharwad", "Gadag", "Hassan", "Haveri", "Kalaburagi (Gulbarga)", "Kodagu", "Kolar", "Koppal", "Mandya", "Mysuru (Mysore)", "Raichur", "Ramanagara", "Shivamogga (Shimoga)", "Tumakuru (Tumkur)", "Udupi", "Uttara Kannada", "Vijayapura (Bijapur)", "Yadgir"],
+    "Kerala": ["Alappuzha", "Ernakulam", "Idukki", "Kannur", "Kasaragod", "Kollam", "Kottayam", "Kozhikode", "Malappuram", "Palakkad", "Pathanamthitta", "Thiruvananthapuram", "Thrissur", "Wayanad"],
+    "Madhya Pradesh": ["Agar Malwa", "Alirajpur", "Anuppur", "Ashoknagar", "Balaghat", "Barwani", "Betul", "Bhind", "Bhopal", "Burhanpur", "Chhatarpur", "Chhindwara", "Damoh", "Datia", "Dewas", "Dhar", "Dindori", "Guna", "Gwalior", "Harda", "Hoshangabad", "Indore", "Jabalpur", "Jhabua", "Katni", "Khandwa", "Khargone", "Mandla", "Mandsaur", "Morena", "Narsinghpur", "Neemuch", "Niwar", "Panna", "Raisen", "Rajgarh", "Ratlam", "Rewa", "Sagar", "Satna", "Sehore", "Seoni", "Shahdol", "Shajapur", "Sheopur", "Shivpuri", "Sidhi", "Singrauli", "Tikamgarh", "Ujjain", "Umaria", "Vidisha"],
+    "Maharashtra": ["Ahmednagar", "Akola", "Amravati", "Aurangabad", "Beed", "Bhandara", "Buldhana", "Chandrapur", "Dhule", "Gadchiroli", "Gondia", "Hingoli", "Jalgaon", "Jalna", "Kolhapur", "Latur", "Mumbai City", "Mumbai Suburban", "Nagpur", "Nanded", "Nandurbar", "Nashik", "Osmanabad", "Palghar", "Parbhani", "Pune", "Raigad", "Ratnagiri", "Sangli", "Satara", "Sindhudurg", "Solapur", "Thane", "Wardha", "Washim", "Yavatmal"],
+    "Manipur": ["Bishnupur", "Chandel", "Churachandpur", "Imphal East", "Imphal West", "Jiribam", "Kakching", "Kamjong", "Kangpokpi", "Noney", "Pherzawl", "Senapati", "Tamenglong", "Tengnoupal", "Thoubal", "Ukhrul"],
+    "Meghalaya": ["East Garo Hills", "East Jaintia Hills", "East Khasi Hills", "North Garo Hills", "Ri Bhoi", "South Garo Hills", "South West Garo Hills", "South West Khasi Hills", "West Garo Hills", "West Jaintia Hills", "West Khasi Hills"],
+    "Mizoram": ["Aizawl", "Champhai", "Hnahthial", "Khawzawl", "Kolasib", "Lawngtlai", "Lunglei", "Mamit", "Saiha", "Serchhip"],
+    "Nagaland": ["Dimapur", "Kiphire", "Kohima", "Longleng", "Mokokchung", "Mon", "Peren", "Phek", "Tuensang", "Wokha", "Zunheboto"],
+    "Odisha": ["Angul", "Balangir", "Balasore", "Bargarh", "Bhadrak", "Boudh", "Cuttack", "Debagarh (Deogarh)", "Dhenkanal", "Gajapati", "Ganjam", "Jagatsinghpur", "Jajpur", "Jharsuguda", "Kalahandi", "Kandhamal", "Kendrapara", "Kendujhar (Keonjhar)", "Khordha", "Koraput", "Malkangiri", "Mayurbhanj", "Nabarangpur", "Nayagarh", "Nuapada", "Puri", "Rayagada", "Sambalpur", "Subarnapur (Sonepur)", "Sundargarh"],
+    "Punjab": ["Amritsar", "Barnala", "Bathinda", "Faridkot", "Fatehgarh Sahib", "Fazilka", "Ferozepur", "Gurdaspur", "Hoshiarpur", "Jalandhar", "Kapurthala", "Ludhiana", "Mansa", "Moga", "Muktsar", "Pathankot", "Patiala", "Rupnagar", "Sahibzada Ajit Singh Nagar (Mohali)", "Sangrur", "Shaheed Bhagat Singh Nagar (Nawanshahr)", "Sri Muktsar Sahib", "Tarn Taran"],
+    "Rajasthan": ["Ajmer", "Alwar", "Banswara", "Baran", "Barmer", "Bharatpur", "Bhilwara", "Bikaner", "Bundi", "Chittorgarh", "Churu", "Dausa", "Dholpur", "Dungarpur", "Hanumangarh", "Jaipur", "Jaisalmer", "Jalore", "Jhalawar", "Jhunjhunu", "Jodhpur", "Karauli", "Kota", "Nagaur", "Pali", "Pratapgarh", "Rajsamand", "Sawai Madhopur", "Sikar", "Sirohi", "Sri Ganganagar", "Tonk", "Udaipur"],
+    "Sikkim": ["East Sikkim", "North Sikkim", "South Sikkim", "West Sikkim"],
+    "Tamil Nadu": ["Ariyalur", "Chengalpattu", "Chennai", "Coimbatore", "Cuddalore", "Dharmapuri", "Dindigul", "Erode", "Kallakurichi", "Kanchipuram", "Kanyakumari", "Karur", "Krishnagiri", "Madurai", "Mayiladuthurai", "Nagapattinam", "Namakkal", "Nilgiris", "Perambalur", "Pudukkottai", "Ramanathapuram", "Ranipet", "Salem", "Sivaganga", "Tenkasi", "Thanjavur", "Theni", "Thoothukudi (Tuticorin)", "Tiruchirappalli", "Tirunelveli", "Tirupattur", "Tiruppur", "Tiruvallur", "Tiruvannamalai", "Tiruvarur", "Vellore", "Viluppuram", "Virudhunagar"],
+    "Telangana": ["Adilabad", "Bhadradri Kothagudem", "Hyderabad", "Jagtial", "Jangaon", "Jayashankar Bhupalpally", "Jogulamba Gadwal", "Kamareddy", "Karimnagar", "Khammam", "Komaram Bheem Asifabad", "Mahabubabad", "Mahabubnagar", "Mancherial", "Medak", "Medchal–Malkajgiri", "Nagarkurnool", "Nalgonda", "Narayanpet", "Nirmal", "Nizamabad", "Peddapalli", "Rajanna Sircilla", "Ranga Reddy", "Sangareddy", "Siddipet", "Suryapet", "Vikarabad", "Wanaparthy", "Warangal Rural", "Warangal Urban", "Yadadri Bhuvanagiri"],
+    "Tripura": ["Dhalai", "Gomati", "Khowai", "North Tripura", "Sepahijala", "South Tripura", "Unakoti", "West Tripura"],
+    "Uttar Pradesh": ["Agra", "Aligarh", "Ambedkar Nagar", "Amethi", "Amroha (Jyotiba Phule Nagar)", "Auraiya", "Ayodhya (Faizabad)", "Azamgarh", "Baghpat", "Bahraich", "Ballia", "Balrampur", "Banda", "Barauli (Barauli Ahir)", "Barabanki", "Bareilly", "Basti", "Bhadohi (Sant Ravidas Nagar)", "Bijnor", "Budaun", "Bulandshahr", "Chandauli", "Chitrakoot", "Deoria", "Etah", "Etawah", "Farrukhabad", "Fatehpur", "Firozabad", "Gautam Buddh Nagar", "Ghaziabad", "Ghazipur", "Gonda", "Gorakhpur", "Hamirpur", "Hapur (Panchsheel Nagar)", "Hardoi", "Hathras", "Jalaun", "Jaunpur", "Jhansi", "Kannauj", "Kanpur Dehat", "Kanpur Nagar", "Kasganj", "Kaushambi", "Kheri (Lakhimpur Kheri)", "Kushinagar", "Lalitpur", "Lucknow", "Maharajganj", "Mahoba", "Mainpuri", "Mathura", "Mau", "Meerut", "Mirzapur", "Moradabad", "Muzaffarnagar", "Pilibhit", "Pratapgarh", "Prayagraj (Allahabad)", "Raebareli", "Rampur", "Saharanpur", "Sambhal (Bhim Nagar)", "Sant Kabir Nagar", "Shahjahanpur", "Shamli (Prabuddh Nagar)", "Shravasti", "Siddharthnagar", "Sitapur", "Sonbhadra", "Sultanpur", "Unnao", "Varanasi"],
+    "Uttarakhand": ["Almora", "Bageshwar", "Chamoli", "Champawat", "Dehradun", "Haridwar", "Nainital", "Pauri Garhwal", "Pithoragarh", "Rudraprayag", "Tehri Garhwal", "Udham Singh Nagar", "Uttarkashi"],
+    "West Bengal": ["Alipurduar", "Bankura", "Paschim Bardhaman (Bardhaman)", "Purba Bardhaman", "Birbhum", "Cooch Behar", "Dakshin Dinajpur (South Dinajpur)", "Darjeeling", "Hooghly", "Howrah", "Jalpaiguri", "Jhargram", "Kalimpong", "Kolkata", "Malda", "Murshidabad", "Nadia", "North 24 Parganas", "Paschim Medinipur (West Medinipur)", "Purba Medinipur (East Medinipur)", "Purulia", "South 24 Parganas", "Uttar Dinajpur (North Dinajpur)"]
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    populateStates();
+
+    document.getElementById('state').addEventListener('change', function() {
+        populateDistricts(this.value);
+    });
+});
+
+   function populateStates() {
+    const stateSelect = document.getElementById('state');
+    for (const state in statesAndDistricts) {
+        const option = document.createElement('option');
+        option.value = state;
+        option.textContent = state;
+        stateSelect.appendChild(option);
+    }
+}
+
+function populateDistricts(selectedState) {
+    const districtSelect = document.getElementById('district');
+    districtSelect.innerHTML = '<option value="">Select District</option>';
+
+    if (selectedState && statesAndDistricts[selectedState]) {
+        statesAndDistricts[selectedState].forEach(district => {
+            const option = document.createElement('option');
+            option.value = district;
+            option.textContent = district;
+            districtSelect.appendChild(option);
         });
+    }
+}
 
         // Initialize the form
         updateFormStep();
